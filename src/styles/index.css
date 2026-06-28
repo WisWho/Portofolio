@@ -1,5 +1,5 @@
 /* ========================================
-   DESIGN SYSTEM — Terminal Portfolio
+   DESIGN SYSTEM Terminal Portfolio
    ======================================== */
 
 /* --- CSS Variables --- */
@@ -130,7 +130,7 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto; /* Changed for Lenis */
   scroll-padding-top: var(--nav-height);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -497,7 +497,7 @@ button {
 }
 
 /* =========================================
-   VIEW TRANSITIONS API — Circular Reveal
+   VIEW TRANSITIONS API Circular Reveal
    ========================================= */
 
 /* Disable the default fade animation */
@@ -1196,9 +1196,10 @@ button {
   border-radius: var(--radius-md);
   overflow: hidden;
   transition: all var(--transition);
-  cursor: pointer;
   opacity: 0;
   transform: translateY(30px);
+  display: flex;
+  flex-direction: column;
 }
 
 .project-card.animate-in {
@@ -1261,6 +1262,9 @@ button {
 
 .project-card-body {
   padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .project-card-title {
@@ -1280,6 +1284,7 @@ button {
 .project-card-links {
   display: flex;
   gap: var(--space-sm);
+  margin-top: auto;
 }
 
 /* --- About --- */

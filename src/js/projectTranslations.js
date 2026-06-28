@@ -11,6 +11,10 @@ export const projectTranslations = {
     'home-monitoring': {
       title: 'Smart Home Monitoring',
       description: 'Sistem pemantauan rumah cerdas berbasis ESP32 untuk mendeteksi suhu dan kelembapan udara secara real-time. Sistem ini juga memiliki fitur remote untuk menyalakan atau mematikan lampu rumah dari jarak jauh.',
+    },
+    'sudut-singgah': {
+      title: 'Sudut Singgah',
+      description: 'Platform web yang dirancang untuk membantu UMKM warkop lokal bernama Sudut Singgah dalam memperkenalkan dan mempromosikan usahanya kepada khalayak yang lebih luas.',
     }
   }
 };

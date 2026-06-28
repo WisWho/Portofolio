@@ -2,6 +2,7 @@
 // MAIN ENTRY POINT
 // ========================================
 
+import Lenis from 'lenis';
 import { initHero3D } from './hero3d.js';
 import { getProjects } from './projects.js';
 import {
@@ -12,9 +13,7 @@ import {
   initNavbarScroll,
   initMobileNav,
 } from './animations.js';
-import { initRouter } from './router.js';
 import { getCopy, getCurrentLanguage, getSkillCategoryLabels, getTypingTexts, applyStaticTranslations, initLanguageToggle } from './i18n.js';
-import { renderProjectDetail } from './projectDetail.js';
 import { initThemeToggle } from './theme.js';
 
 // ---- Skill Data with Icons (using devicon CDN) ----
@@ -27,7 +26,7 @@ const baseSkillCategories = [
       { name: 'CSS', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg' },
       { name: 'Python', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg' },
       { name: 'Dart', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dart/dart-original.svg' },
-      { name: 'JavaScript', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
+      // { name: 'JavaScript', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
     ],
   },
   {
@@ -41,11 +40,11 @@ const baseSkillCategories = [
     name: 'Tools & OS',
     skills: [
       { name: 'Linux', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg' },
-      { name: 'CLI / Terminal', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg' },
+      // { name: 'CLI / Terminal', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg' },
       { name: 'Git', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg' },
-      { name: 'Docker', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
+      // { name: 'Docker', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg' },
       {name:'github', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg'},
-      {name:'npm', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/npm/npm-original.svg'},
+      // {name:'npm', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/npm/npm-original.svg'},
       // {name:'yarn', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/yarn/yarn-original.svg'},
       {name:'VS Code', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg'},
     ],
@@ -110,25 +109,26 @@ function renderProjectCards() {
           <h3 class="project-card-title">${project.title}</h3>
           <p class="project-card-desc">${project.description}</p>
           <div class="project-card-links">
-            <a href="#/project/${project.id}" class="btn btn-outline btn-sm">
-              ${ui.projectUi.viewDetails} <i class="ph ph-arrow-right"></i>
-            </a>
+            ${
+              project.liveUrl && project.liveUrl !== '#'
+                ? `<a href="${project.liveUrl}" target="_blank" class="btn btn-primary btn-sm">
+                    <i class="ph ph-globe"></i> ${ui.projectUi.liveDemo}
+                   </a>`
+                : ''
+            }
+            ${
+              project.githubUrl && project.githubUrl !== '#'
+                ? `<a href="${project.githubUrl}" target="_blank" class="btn btn-outline btn-sm">
+                    <i class="ph ph-github-logo"></i> ${ui.projectUi.sourceCode}
+                   </a>`
+                : ''
+            }
           </div>
         </div>
       </div>
     `
     )
     .join('');
-
-  // Add click handler on entire card
-  grid.querySelectorAll('.project-card').forEach((card) => {
-    card.addEventListener('click', (e) => {
-      // Don't navigate if clicking a link
-      if (e.target.closest('a')) return;
-      const projectId = card.dataset.project;
-      window.location.hash = `/project/${projectId}`;
-    });
-  });
 }
 
 // ---- Render Skills ----
@@ -233,6 +233,18 @@ function refreshLanguageContent({ animate = false, refreshScroll = false } = {})
   }, LANGUAGE_FADE_DURATION);
 }
 
+let lenis;
+
+// ---- Smooth Scroll (Lenis) ----
+function initLenis() {
+  lenis = new Lenis();
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+}
+
 // ---- Smooth Scroll for Nav Links ----
 function initSmoothScroll() {
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
@@ -241,17 +253,18 @@ function initSmoothScroll() {
       // Skip router links
       if (href.startsWith('#/')) return;
 
+      e.preventDefault();
       // Handle #home specially
       if (href === '#home') {
-        e.preventDefault();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (lenis) lenis.scrollTo(0);
+        else window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
       const target = document.querySelector(href);
       if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth' });
+        if (lenis) lenis.scrollTo(target);
+        else target.scrollIntoView({ behavior: 'smooth' });
       }
     });
   });
@@ -259,6 +272,7 @@ function initSmoothScroll() {
 
 // ---- Initialize Everything ----
 async function init() {
+  initLenis();
   // Theme toggle (before hero3D so data-theme is set)
   initThemeToggle();
   initLanguageToggle();
@@ -282,9 +296,6 @@ async function init() {
   initNavbarScroll();
   initMobileNav();
   initSmoothScroll();
-
-  // Router
-  initRouter();
 }
 
 // Start when DOM is ready

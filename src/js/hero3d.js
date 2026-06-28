@@ -1,5 +1,5 @@
 // ========================================
-// THREE.JS 3D HERO BACKGROUND
+// THREE.JS 3D HERO BACKGROUND (Optimized for Mobile)
 // ========================================
 
 import * as THREE from 'three';
@@ -7,6 +7,9 @@ import * as THREE from 'three';
 export function initHero3D(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+
+  // 1. Deteksi apakah user pake HP / Layar Kecil
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
   // Theme color palettes
   const themes = {
@@ -36,9 +39,9 @@ export function initHero3D(canvasId) {
 
   // Scene
   const scene = new THREE.Scene();
-  scene.background = null; // Transparent to let CSS bg show
+  scene.background = null; 
   const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-  scene.fog = new THREE.FogExp2(themes[currentTheme].fog, 0.035);
+  scene.fog = new THREE.FogExp2(themes[currentTheme].fog, isMobile ? 0.05 : 0.035); // Fog sedikit lebih tebal di mobile biar objek jauh samar
 
   // Camera
   const camera = new THREE.PerspectiveCamera(
@@ -52,46 +55,22 @@ export function initHero3D(canvasId) {
   // Renderer
   const renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: true,
+    antialias: !isMobile, // Matikan antialias di HP biar GPU gak kerja keras
     alpha: true,
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  
+  // 2. Kunci pixel ratio di angka 1 untuk mobile (Sangat ngaruh ke performa)
+  renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
 
   // ---- Materials ----
-  const greenWireMat = new THREE.MeshBasicMaterial({
-    color: 0x98C379,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.35,
-  });
-
-  const cyanWireMat = new THREE.MeshBasicMaterial({
-    color: 0x56B6C2,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.3,
-  });
-
-  const purpleWireMat = new THREE.MeshBasicMaterial({
-    color: 0xC778DD,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.25,
-  });
-
-  const dimWireMat = new THREE.MeshBasicMaterial({
-    color: 0x5C6370,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.15,
-  });
+  const greenWireMat = new THREE.MeshBasicMaterial({ color: 0x98C379, wireframe: true, transparent: true, opacity: 0.35 });
+  const cyanWireMat = new THREE.MeshBasicMaterial({ color: 0x56B6C2, wireframe: true, transparent: true, opacity: 0.3 });
+  const purpleWireMat = new THREE.MeshBasicMaterial({ color: 0xC778DD, wireframe: true, transparent: true, opacity: 0.25 });
+  const dimWireMat = new THREE.MeshBasicMaterial({ color: 0x5C6370, wireframe: true, transparent: true, opacity: 0.15 });
 
   // ---- Floating Geometries ----
-  const geometries = [];
   const floatingObjects = [];
-
-  // Create varied geometric shapes
   const shapes = [
     { geo: new THREE.IcosahedronGeometry(1.2, 0), mat: greenWireMat },
     { geo: new THREE.OctahedronGeometry(0.9, 0), mat: cyanWireMat },
@@ -99,37 +78,24 @@ export function initHero3D(canvasId) {
     { geo: new THREE.TetrahedronGeometry(0.7, 0), mat: greenWireMat },
     { geo: new THREE.BoxGeometry(0.8, 0.8, 0.8), mat: cyanWireMat },
     { geo: new THREE.DodecahedronGeometry(0.6, 0), mat: purpleWireMat },
-    { geo: new THREE.TorusKnotGeometry(0.5, 0.15, 32, 8), mat: greenWireMat },
-    { geo: new THREE.IcosahedronGeometry(0.5, 1), mat: dimWireMat },
-    { geo: new THREE.ConeGeometry(0.5, 1.2, 6), mat: cyanWireMat },
-    { geo: new THREE.CylinderGeometry(0.3, 0.5, 1, 6), mat: dimWireMat },
   ];
 
-  // Spread objects in a 3D space
-  const objectCount = 25;
+  // 3. Pangkas jumlah objek melayang di mobile (Dari 25 jadi 10)
+  const objectCount = isMobile ? 10 : 25;
   for (let i = 0; i < objectCount; i++) {
     const shape = shapes[i % shapes.length];
     const mesh = new THREE.Mesh(shape.geo, shape.mat);
 
-    // Random positions in a wide space
     mesh.position.set(
-      (Math.random() - 0.5) * 40,
-      (Math.random() - 0.5) * 25,
+      (Math.random() - 0.5) * (isMobile ? 20 : 40), // Persempit area sebaran di mobile
+      (Math.random() - 0.5) * (isMobile ? 15 : 25),
       (Math.random() - 0.5) * 30 - 5
     );
 
-    // Random initial rotation
-    mesh.rotation.set(
-      Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2
-    );
-
-    // Random scale
+    mesh.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
     const scale = 0.5 + Math.random() * 1.2;
     mesh.scale.set(scale, scale, scale);
 
-    // Store animation properties
     mesh.userData = {
       rotSpeed: {
         x: (Math.random() - 0.5) * 0.008,
@@ -148,63 +114,43 @@ export function initHero3D(canvasId) {
 
   // ---- Floating Console Windows ----
   const consoleWindows = [];
-  const codeSnippets = [
-    'const init = () => {\n  loadModules();\n  startRenderer();\n};',
-    'function deploy() {\n  build();\n  test();\n  ship();\n}',
-    'class App {\n  constructor() {\n    this.state = {};\n  }\n}',
-    'export default {\n  port: 3000,\n  env: "dev"\n};',
-  ];
+  
+  // 4. Jendela console dihilangkan total di mobile karena memakan draw calls besar
+  if (!isMobile) {
+    for (let i = 0; i < 4; i++) {
+      const consoleGroup = new THREE.Group();
+      const frameGeo = new THREE.PlaneGeometry(3.5, 2.2);
+      const frameMat = new THREE.MeshBasicMaterial({ color: 0x282C33, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+      const frame = new THREE.Mesh(frameGeo, frameMat);
+      consoleGroup.add(frame);
 
-  for (let i = 0; i < 4; i++) {
-    const consoleGroup = new THREE.Group();
+      const borderGeo = new THREE.EdgesGeometry(frameGeo);
+      const borderMat = new THREE.LineBasicMaterial({ color: 0x98C379, transparent: true, opacity: 0.4 });
+      const border = new THREE.LineSegments(borderGeo, borderMat);
+      consoleGroup.add(border);
 
-    // Console frame
-    const frameGeo = new THREE.PlaneGeometry(3.5, 2.2);
-    const frameMat = new THREE.MeshBasicMaterial({
-      color: 0x282C33,
-      transparent: true,
-      opacity: 0.3,
-      side: THREE.DoubleSide,
-    });
-    const frame = new THREE.Mesh(frameGeo, frameMat);
-    consoleGroup.add(frame);
+      const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const radius = 12 + Math.random() * 5;
+      consoleGroup.position.set(Math.cos(angle) * radius, (Math.random() - 0.5) * 8, -5 - Math.random() * 10);
+      consoleGroup.rotation.y = -angle * 0.3;
+      consoleGroup.rotation.x = (Math.random() - 0.5) * 0.3;
 
-    // Console border
-    const borderGeo = new THREE.EdgesGeometry(frameGeo);
-    const borderMat = new THREE.LineBasicMaterial({
-      color: 0x98C379,
-      transparent: true,
-      opacity: 0.4,
-    });
-    const border = new THREE.LineSegments(borderGeo, borderMat);
-    consoleGroup.add(border);
+      consoleGroup.userData = {
+        rotSpeed: (Math.random() - 0.5) * 0.003,
+        floatSpeed: 0.15 + Math.random() * 0.2,
+        floatAmplitude: 0.4,
+        initialY: consoleGroup.position.y,
+        phase: Math.random() * Math.PI * 2,
+      };
 
-    // Position consoles around the edges
-    const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
-    const radius = 12 + Math.random() * 5;
-    consoleGroup.position.set(
-      Math.cos(angle) * radius,
-      (Math.random() - 0.5) * 8,
-      -5 - Math.random() * 10
-    );
-
-    consoleGroup.rotation.y = -angle * 0.3;
-    consoleGroup.rotation.x = (Math.random() - 0.5) * 0.3;
-
-    consoleGroup.userData = {
-      rotSpeed: (Math.random() - 0.5) * 0.003,
-      floatSpeed: 0.15 + Math.random() * 0.2,
-      floatAmplitude: 0.4,
-      initialY: consoleGroup.position.y,
-      phase: Math.random() * Math.PI * 2,
-    };
-
-    scene.add(consoleGroup);
-    consoleWindows.push(consoleGroup);
+      scene.add(consoleGroup);
+      consoleWindows.push(consoleGroup);
+    }
   }
 
   // ---- Particle Grid / Nodes ----
-  const particleCount = 150;
+  // 5. Kurangi jumlah partikel di mobile (Dari 150 jadi 40)
+  const particleCount = isMobile ? 40 : 150;
   const particleGeo = new THREE.BufferGeometry();
   const particlePositions = new Float32Array(particleCount * 3);
 
@@ -215,10 +161,9 @@ export function initHero3D(canvasId) {
   }
 
   particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-
   const particleMat = new THREE.PointsMaterial({
     color: 0x98C379,
-    size: 0.08,
+    size: isMobile ? 0.12 : 0.08, // Di HP dibikin agak gedean dikit biar tetep kelihatan
     transparent: true,
     opacity: 0.5,
     sizeAttenuation: true,
@@ -228,33 +173,32 @@ export function initHero3D(canvasId) {
   scene.add(particles);
 
   // ---- Connection Lines ----
-  const linePositions = [];
-  for (let i = 0; i < particleCount; i++) {
-    for (let j = i + 1; j < particleCount; j++) {
-      const dx = particlePositions[i * 3] - particlePositions[j * 3];
-      const dy = particlePositions[i * 3 + 1] - particlePositions[j * 3 + 1];
-      const dz = particlePositions[i * 3 + 2] - particlePositions[j * 3 + 2];
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  // 6. Matikan kalkulasi garis penghubung di mobile (Ini bottleneck utama GPU mobile)
+  if (!isMobile) {
+    const linePositions = [];
+    for (let i = 0; i < particleCount; i++) {
+      for (let j = i + 1; j < particleCount; j++) {
+        const dx = particlePositions[i * 3] - particlePositions[j * 3];
+        const dy = particlePositions[i * 3 + 1] - particlePositions[j * 3 + 1];
+        const dz = particlePositions[i * 3 + 2] - particlePositions[j * 3 + 2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-      if (dist < 5) {
-        linePositions.push(
-          particlePositions[i * 3], particlePositions[i * 3 + 1], particlePositions[i * 3 + 2],
-          particlePositions[j * 3], particlePositions[j * 3 + 1], particlePositions[j * 3 + 2]
-        );
+        if (dist < 5) {
+          linePositions.push(
+            particlePositions[i * 3], particlePositions[i * 3 + 1], particlePositions[i * 3 + 2],
+            particlePositions[j * 3], particlePositions[j * 3 + 1], particlePositions[j * 3 + 2]
+          );
+        }
       }
     }
-  }
 
-  if (linePositions.length > 0) {
-    const lineGeo = new THREE.BufferGeometry();
-    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-    const lineMat = new THREE.LineBasicMaterial({
-      color: 0x5C6370,
-      transparent: true,
-      opacity: 0.1,
-    });
-    const lines = new THREE.LineSegments(lineGeo, lineMat);
-    scene.add(lines);
+    if (linePositions.length > 0) {
+      const lineGeo = new THREE.BufferGeometry();
+      lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x5C6370, transparent: true, opacity: 0.1 });
+      const lines = new THREE.LineSegments(lineGeo, lineMat);
+      scene.add(lines);
+    }
   }
 
   // ---- Mouse Interaction ----
@@ -262,12 +206,15 @@ export function initHero3D(canvasId) {
   let targetCameraX = 0;
   let targetCameraY = 0;
 
-  window.addEventListener('mousemove', (e) => {
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    targetCameraX = mouse.x * 2;
-    targetCameraY = mouse.y * 1;
-  });
+  // Hanya jalankan mousemove di non-mobile device
+  if (!isMobile) {
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      targetCameraX = mouse.x * 2;
+      targetCameraY = mouse.y * 1;
+    });
+  }
 
   // ---- Animation Loop ----
   const clock = new THREE.Clock();
@@ -276,9 +223,11 @@ export function initHero3D(canvasId) {
     requestAnimationFrame(animate);
     const elapsed = clock.getElapsedTime();
 
-    // Camera parallax
-    camera.position.x += (targetCameraX - camera.position.x) * 0.02;
-    camera.position.y += (targetCameraY - camera.position.y) * 0.02;
+    // Camera parallax (Skip smooth movement di mobile karena gak ada mousemove)
+    if (!isMobile) {
+      camera.position.x += (targetCameraX - camera.position.x) * 0.02;
+      camera.position.y += (targetCameraY - camera.position.y) * 0.02;
+    }
     camera.lookAt(0, 0, 0);
 
     // Animate floating objects
@@ -290,11 +239,13 @@ export function initHero3D(canvasId) {
       obj.position.y = d.initialY + Math.sin(elapsed * d.floatSpeed + d.phase) * d.floatAmplitude;
     }
 
-    // Animate console windows
-    for (const cw of consoleWindows) {
-      const d = cw.userData;
-      cw.rotation.y += d.rotSpeed;
-      cw.position.y = d.initialY + Math.sin(elapsed * d.floatSpeed + d.phase) * d.floatAmplitude;
+    // Animate console windows (Hanya jalan di desktop)
+    if (!isMobile) {
+      for (const cw of consoleWindows) {
+        const d = cw.userData;
+        cw.rotation.y += d.rotSpeed;
+        cw.position.y = d.initialY + Math.sin(elapsed * d.floatSpeed + d.phase) * d.floatAmplitude;
+      }
     }
 
     // Slowly rotate particles
@@ -311,35 +262,27 @@ export function initHero3D(canvasId) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
   });
 
   // ---- Theme Change Handler ----
   window.addEventListener('themechange', (e) => {
     const t = themes[e.detail.theme] || themes.dark;
 
-    // Update fog
     scene.fog.color.setHex(t.fog);
-
-    // Update wireframe materials
     greenWireMat.color.setHex(t.green);
     cyanWireMat.color.setHex(t.cyan);
     purpleWireMat.color.setHex(t.purple);
     dimWireMat.color.setHex(t.dim);
-
-    // Update particles
     particleMat.color.setHex(t.particleColor);
 
-    // Update console windows
-    for (const cw of consoleWindows) {
-      cw.children.forEach((child) => {
-        if (child.isMesh && child.material) {
-          child.material.color.setHex(t.consoleBg);
-        }
-        if (child.isLineSegments && child.material) {
-          child.material.color.setHex(t.consoleBorder);
-        }
-      });
+    if (!isMobile) {
+      for (const cw of consoleWindows) {
+        cw.children.forEach((child) => {
+          if (child.isMesh && child.material) child.material.color.setHex(t.consoleBg);
+          if (child.isLineSegments && child.material) child.material.color.setHex(t.consoleBorder);
+        });
+      }
     }
   });
 }

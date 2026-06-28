@@ -1,5 +1,5 @@
 // ========================================
-// I18N — English / Indonesian
+// I18N English / Indonesian
 // ========================================
 
 const STORAGE_KEY = 'portfolio-language';
@@ -73,7 +73,7 @@ const copy = {
         { label: 'Location', value: 'Indonesia' },
         { label: 'Education', value: 'Self-taught + Formal' },
         { label: 'Focus', value: 'Web Development' },
-        { label: 'Status', value: 'Open to work', valueClass: 't-accent' },
+        { label: 'Status', value: 'Learning &amp;&amp; Building', valueClass: 't-accent' },
       ],
     },
     skills: {
@@ -176,7 +176,7 @@ const copy = {
         { label: 'Lokasi', value: 'Indonesia' },
         { label: 'Pendidikan', value: 'Otodidak + Formal' },
         { label: 'Fokus', value: 'Web Development' },
-        { label: 'Status', value: 'Terbuka untuk kerja', valueClass: 't-accent' },
+        { label: 'Status', value: 'Learning &amp;&amp; Building', valueClass: 't-accent' },
       ],
     },
     skills: {
@@ -198,7 +198,7 @@ const copy = {
       viewDetails: 'Lihat Detail',
       backToProjects: 'kembali ke proyek',
       liveDemo: 'Demo Langsung',
-      sourceCode: 'Kode Sumber',
+      sourceCode: 'Source Code',
       problem: 'Masalah Utama',
       role: 'Peran Saya',
       process: 'Proses Pengerjaan',

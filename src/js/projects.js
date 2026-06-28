@@ -22,6 +22,15 @@ const baseProjects = [
     image: '/projects/Home_Monitoring.webp',
     liveUrl: '#',
     githubUrl: '#',
+  },
+  {
+    id: 'sudut-singgah',
+    title: 'Sudut Singgah',
+    description: 'A web platform designed to help a local coffee shop (warkop) named Sudut Singgah introduce and promote their business to a wider audience.',
+    tags: ['Web', 'Frontend'],
+    image: '/projects/Sudut_Singgah.webp',
+    liveUrl: 'https://sudut-singgah.vercel.app/',
+    githubUrl: 'https://github.com/WisWho/Sudut-Singgah',
   }
 ];
 

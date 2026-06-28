@@ -1,5 +1,5 @@
 // ========================================
-// THEME SWITCHER — Light / Dark Mode
+// THEME SWITCHER Light / Dark Mode
 // View Transitions API + Circular Reveal
 // ========================================
 
