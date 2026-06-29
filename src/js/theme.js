@@ -63,152 +63,32 @@ function triggerToggleIconAnimation(toggle) {
   }, REVEAL_DURATION);
 }
 
-function resolveRevealOrigin(event) {
-  if (typeof event?.clientX === 'number' && typeof event?.clientY === 'number') {
-    return { x: event.clientX, y: event.clientY };
-  }
 
-  const fallbackTarget =
-    event?.currentTarget instanceof Element
-      ? event.currentTarget
-      : document.getElementById('theme-toggle');
-
-  if (fallbackTarget) {
-    const rect = fallbackTarget.getBoundingClientRect();
-    return {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2,
-    };
-  }
-
-  return {
-    x: window.innerWidth - 32,
-    y: 32,
-  };
-}
-
-function getRevealRadius(x, y) {
-  return Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-}
-
-function captureRevealPalette() {
-  const styles = getComputedStyle(document.documentElement);
-  const paletteKeys = [
-    'bg-primary',
-    'bg-secondary',
-    'bg-card',
-    'bg-card-rgb',
-    'accent-rgb',
-    'green-rgb',
-    'border-rgb',
-    'text-muted-rgb',
-  ];
-
-  return paletteKeys.reduce((palette, key) => {
-    palette[key] = styles.getPropertyValue(`--${key}`).trim();
-    return palette;
-  }, {});
-}
-
-function createRevealOverlay(palette, x, y, radius) {
-  const overlay = document.createElement('div');
-  overlay.className = 'theme-reveal-overlay';
-
-  Object.entries(palette).forEach(([key, value]) => {
-    overlay.style.setProperty(`--overlay-${key}`, value);
-  });
-
-  overlay.style.clipPath = `circle(${radius}px at ${x}px ${y}px)`;
-  return overlay;
-}
-
-async function runFallbackReveal(nextTheme, x, y) {
-  const radius = getRevealRadius(x, y);
-  const palette = captureRevealPalette();
-  const overlay = createRevealOverlay(palette, x, y, radius);
-
-  document.body.appendChild(overlay);
-  overlay.getBoundingClientRect();
-
-  applyTheme(nextTheme);
-
-  try {
-    const animation = overlay.animate(
-      {
-        clipPath: [
-          `circle(${radius}px at ${x}px ${y}px)`,
-          `circle(0px at ${x}px ${y}px)`,
-        ],
-      },
-      {
-        duration: REVEAL_DURATION,
-        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-        fill: 'forwards',
-      }
-    );
-
-    await animation.finished;
-  } catch {
-    // If clip-path animation fails, at least keep the theme switch functional.
-  } finally {
-    overlay.remove();
-  }
-}
 
 /**
- * Toggle with View Transitions API circular reveal.
- * Falls back to instant switch if API not supported.
+ * Toggle theme with a soft CSS fade to avoid lag from View Transitions on heavy pages.
  */
-async function toggleWithReveal(event) {
+function toggleWithReveal(event) {
   if (isTransitioning) return;
 
   const current = document.documentElement.getAttribute('data-theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
   const toggle = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null;
-  const { x, y } = resolveRevealOrigin(event);
 
   triggerToggleIconAnimation(toggle);
 
-  if (reducedMotionQuery.matches) {
-    applyTheme(next);
-    return;
-  }
-
   isTransitioning = true;
-
-  try {
-    if (document.startViewTransition) {
-      const endRadius = getRevealRadius(x, y);
-      const transition = document.startViewTransition(() => {
-        applyTheme(next);
-      });
-
-      await transition.ready;
-
-      const animation = document.documentElement.animate(
-        {
-          clipPath: [
-            `circle(0px at ${x}px ${y}px)`,
-            `circle(${endRadius}px at ${x}px ${y}px)`,
-          ],
-        },
-        {
-          duration: REVEAL_DURATION,
-          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          pseudoElement: '::view-transition-new(root)',
-        }
-      );
-
-      await animation.finished;
-      return;
-    }
-
-    await runFallbackReveal(next, x, y);
-  } catch {
-    await runFallbackReveal(next, x, y);
-  } finally {
+  
+  // Add class to enable CSS transitions
+  document.documentElement.classList.add('theme-transitioning');
+  
+  applyTheme(next);
+  
+  // Remove transition class after fade completes (400ms)
+  setTimeout(() => {
+    document.documentElement.classList.remove('theme-transitioning');
     isTransitioning = false;
-  }
+  }, 400);
 }
 
 export function initThemeToggle() {
