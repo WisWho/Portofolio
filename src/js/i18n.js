@@ -60,6 +60,7 @@ const copy = {
         'I\'m always open to learning new things and collaborating on exciting projects. If you have an idea, let\'s build it together!',
       ],
       funFactsTitle: 'fun-facts',
+      cvBtn: 'View CV',
       funFacts: [
         'I enjoy playing Minecraft in my free time',
         'I\'m more productive at night (night owl coder)',
@@ -78,6 +79,10 @@ const copy = {
     },
     skills: {
       categories: ['Languages', 'Frameworks', 'Tools', 'Databases'],
+      tabSkills: 'Technical Skills',
+      tabCerts: 'Certifications',
+      showMore: 'Show More',
+      showLess: 'Show Less',
     },
     contact: {
       paragraphs: [
@@ -163,6 +168,7 @@ const copy = {
         'Saya selalu terbuka untuk belajar hal baru dan berkolaborasi di proyek yang seru. Kalau kamu punya ide, ayo kita bangun bareng!',
       ],
       funFactsTitle: 'fakta-seru',
+      cvBtn: 'Lihat CV',
       funFacts: [
         'Saya suka main Minecraft di waktu luang',
         'Saya lebih produktif saat malam hari (night owl coder)',
@@ -180,7 +186,11 @@ const copy = {
       ],
     },
     skills: {
-      categories: ['Bahasa', 'Framework', 'Tools', 'Database'],
+      categories: ['Bahasa Pemrograman', 'Frameworks', 'Tools', 'Database'],
+      tabSkills: 'Keahlian Teknis',
+      tabCerts: 'Sertifikasi',
+      showMore: 'Tampilkan Lebih Banyak',
+      showLess: 'Tampilkan Lebih Sedikit',
     },
     contact: {
       paragraphs: [
@@ -371,6 +381,8 @@ export function applyStaticTranslations() {
   setText('projects-title-label', ui.sectionTitles.projects);
   setText('about-title-label', ui.sectionTitles.about);
   setText('skills-title-label', ui.sectionTitles.skills);
+  setText('tab-skills-label', ui.skills.tabSkills);
+  setText('tab-certs-label', ui.skills.tabCerts);
   setText('contact-title-label', ui.sectionTitles.contact);
   setText('projects-description', ui.projectsDescription);
 
@@ -384,6 +396,7 @@ export function applyStaticTranslations() {
   setText('fact-3-text', ui.about.funFacts[2]);
   setText('fact-4-text', ui.about.funFacts[3]);
   setText('fact-5-text', ui.about.funFacts[4]);
+  setText('about-cv-label', ui.about.cvBtn);
   setHTML('about-terminal-body', renderTerminalLines(ui.about.terminalLines));
 
   setText('contact-text-1', ui.contact.paragraphs[0]);

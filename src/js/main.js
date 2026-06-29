@@ -15,6 +15,7 @@ import {
 } from './animations.js';
 import { getCopy, getCurrentLanguage, getSkillCategoryLabels, getTypingTexts, applyStaticTranslations, initLanguageToggle } from './i18n.js';
 import { initThemeToggle } from './theme.js';
+import { certificatesData } from './certificates.js';
 
 // ---- Skill Data with Icons (using devicon CDN) ----
 const baseSkillCategories = [
@@ -57,6 +58,71 @@ const baseSkillCategories = [
     ],
   },
 ];
+
+
+
+// ---- Skills Tab Switching ----
+window.switchSkillTab = function (tabId) {
+  const btnSkills = document.getElementById('tab-btn-skills');
+  const btnCerts = document.getElementById('tab-btn-certs');
+  const gridSkills = document.getElementById('skills-grid');
+  const gridCerts = document.getElementById('certs-grid');
+
+  if (!btnSkills || !btnCerts || !gridSkills || !gridCerts) return;
+
+  const currentTab = btnSkills.classList.contains('active') ? 'skills' : 'certs';
+  if (currentTab === tabId) return; // Already active
+
+  const outGrid = currentTab === 'skills' ? gridSkills : gridCerts;
+  const inGrid = tabId === 'skills' ? gridSkills : gridCerts;
+
+  // Toggle button styles immediately
+  if (tabId === 'skills') {
+    btnSkills.classList.add('active');
+    btnCerts.classList.remove('active');
+  } else {
+    btnCerts.classList.add('active');
+    btnSkills.classList.remove('active');
+  }
+
+  // Animate Out
+  outGrid.classList.remove('active-tab');
+  outGrid.classList.add('fade-out-tab');
+
+  // Wait for fade out to complete, then display block the next one
+  setTimeout(() => {
+    outGrid.style.display = 'none';
+    outGrid.classList.remove('fade-out-tab');
+
+    inGrid.style.display = 'grid'; // Need to be grid before fading in
+    
+    // Force reflow
+    void inGrid.offsetWidth;
+
+    // Animate In
+    inGrid.classList.add('active-tab');
+  }, 250); // Matches the 0.25s CSS transition
+};
+
+// ---- Certificate Modal ----
+window.openCertModal = function (imgSrc) {
+  if (!imgSrc) return;
+  const modal = document.getElementById('cert-modal');
+  const modalImg = document.getElementById('cert-modal-image');
+  if (modal && modalImg) {
+    modalImg.src = imgSrc;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+window.closeCertModal = function () {
+  const modal = document.getElementById('cert-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+};
 
 const LANGUAGE_FADE_DURATION = 400;
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -167,6 +233,57 @@ function renderSkills() {
     .join('');
 }
 
+let isCertsExpanded = false;
+window.toggleCerts = function() {
+  isCertsExpanded = !isCertsExpanded;
+  renderCertificates();
+};
+
+// ---- Render Certificates ----
+function renderCertificates() {
+  const grid = document.getElementById('certs-grid');
+  if (!grid) return;
+
+  const ui = getCopy();
+  const MAX_VISIBLE = 3;
+  const visibleCerts = isCertsExpanded ? certificatesData : certificatesData.slice(0, MAX_VISIBLE);
+
+  let html = visibleCerts
+    .map(
+      (cert) => `
+      <div class="cert-card" ${cert.image ? `onclick="openCertModal('${cert.image}')"` : ''}>
+        ${cert.image ? `
+        <div class="cert-image-wrapper">
+          <img src="${cert.image}" alt="${cert.title}" class="cert-image" loading="lazy" />
+        </div>
+        ` : ''}
+        <div class="cert-header">
+          <i class="ph ${cert.icon} cert-icon"></i>
+        </div>
+        <h3 class="cert-title">${cert.title}</h3>
+        <span class="cert-issuer">${cert.issuer}</span>
+        <span class="cert-date">${cert.date}</span>
+      </div>
+    `
+    )
+    .join('');
+
+  if (certificatesData.length > MAX_VISIBLE) {
+    const btnText = isCertsExpanded ? ui.skills.showLess : ui.skills.showMore;
+    const icon = isCertsExpanded ? 'ph-caret-up' : 'ph-caret-down';
+    
+    html += `
+      <div class="certs-action-btn">
+        <button class="btn btn-outline" onclick="toggleCerts()">
+          ${btnText} <i class="ph ${icon}"></i>
+        </button>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
+}
+
 function refreshProjectDetailIfNeeded() {
   const detailView = document.getElementById('project-detail-view');
   if (!detailView || !window.location.hash.startsWith('#/project/')) return;
@@ -183,6 +300,7 @@ function refreshLanguageContent({ animate = false, refreshScroll = false } = {})
     applyStaticTranslations();
     renderProjectCards();
     renderSkills();
+    renderCertificates();
     refreshProjectDetailIfNeeded();
     initTypingAnimation('typing-text', getTypingTexts());
 

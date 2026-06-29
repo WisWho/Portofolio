@@ -65,7 +65,8 @@ export function initScrollAnimations() {
         entry.target.classList.add('visible');
         // For staggered card animations
         if (entry.target.classList.contains('project-card') || 
-            entry.target.classList.contains('skill-category')) {
+            entry.target.classList.contains('skill-category') ||
+            entry.target.classList.contains('cert-card')) {
           entry.target.classList.add('animate-in');
         }
       }
@@ -88,6 +89,12 @@ export function initScrollAnimations() {
   document.querySelectorAll('.skill-category').forEach((cat, index) => {
     cat.style.transitionDelay = `${index * 0.08}s`;
     observer.observe(cat);
+  });
+
+  // Apply to cert cards with staggered delay
+  document.querySelectorAll('.cert-card').forEach((card, index) => {
+    card.style.transitionDelay = `${index * 0.08}s`;
+    observer.observe(card);
   });
 }
 

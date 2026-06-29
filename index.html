@@ -231,6 +231,12 @@
                   exciting projects. If you have an idea, let's build it
                   together!
                 </p>
+                <div class="about-cta" style="margin-top: var(--space-xl); margin-bottom: var(--space-xl);">
+                  <a href="/CV_Yusuf_Muhibuddin.pdf" class="btn btn-outline" target="_blank">
+                    <span class="btn-icon"><i class="ph ph-file-text"></i></span>
+                    <span id="about-cv-label">View CV</span>
+                  </a>
+                </div>
                 <div class="fun-facts">
                   <h3 class="fun-facts-title">
                     <span class="text-accent">#</span><span id="fun-facts-label">fun-facts</span>
@@ -310,8 +316,24 @@
               </h2>
               <div class="section-line"></div>
             </div>
-            <div class="skills-grid" id="skills-grid">
-              <!-- Populated by JS -->
+            <div class="skills-tabs-container">
+              <div class="skills-tabs">
+                <button id="tab-btn-skills" class="tab-btn active" onclick="switchSkillTab('skills')">
+                  <i class="ph ph-code"></i> <span id="tab-skills-label">Technical Skills</span>
+                </button>
+                <button id="tab-btn-certs" class="tab-btn" onclick="switchSkillTab('certs')">
+                  <i class="ph ph-certificate"></i> <span id="tab-certs-label">Certifications</span>
+                </button>
+              </div>
+            </div>
+            
+            <div class="skills-content-area">
+              <div class="skills-grid active-tab" id="skills-grid">
+                <!-- Populated by JS -->
+              </div>
+              <div class="certs-grid" id="certs-grid">
+                <!-- Populated by JS -->
+              </div>
             </div>
           </div>
         </section>
@@ -477,6 +499,15 @@
         </footer>
       </div>
 
+    <!-- Certificate Modal -->
+    <div id="cert-modal" class="cert-modal" onclick="closeCertModal()">
+      <div class="cert-modal-content" onclick="event.stopPropagation()">
+        <button id="cert-modal-close" class="cert-modal-close" onclick="closeCertModal()" aria-label="Close modal">
+          <i class="ph ph-x"></i>
+        </button>
+        <img id="cert-modal-image" src="" alt="Certificate" />
+      </div>
+    </div>
 
     </main>
 
