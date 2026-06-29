@@ -1,288 +1,191 @@
 // ========================================
-// THREE.JS 3D HERO BACKGROUND (Optimized for Mobile)
+// 2D CANVAS HERO BACKGROUND (High Performance)
+// Replaced Three.js with native 2D Canvas API
 // ========================================
-
-import * as THREE from 'three';
 
 export function initHero3D(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // 1. Deteksi apakah user pake HP / Layar Kecil
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+  const ctx = canvas.getContext('2d', { alpha: true });
+  if (!ctx) return;
 
-  // Theme color palettes
+  // 1. Detect if mobile for performance tuning
+  const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
+
+  // Theme palettes (using rgba for canvas)
   const themes = {
     dark: {
-      fog: 0x282C33,
-      green: 0x98C379,
-      cyan: 0x56B6C2,
-      purple: 0xC778DD,
-      dim: 0x5C6370,
-      consoleBg: 0x282C33,
-      consoleBorder: 0x98C379,
-      particleColor: 0x98C379,
-      lineColor: 0x5C6370,
+      particle: '152, 195, 121', // #98C379
+      line: '92, 99, 112',       // #5C6370
+      accent: '199, 120, 221',   // #C778DD
     },
     light: {
-      fog: 0xf5f5f7,
-      green: 0x27ae60,
-      cyan: 0x2980b9,
-      purple: 0x9b59b6,
-      dim: 0x8a8a9a,
-      consoleBg: 0xffffff,
-      consoleBorder: 0x27ae60,
-      particleColor: 0x9b59b6,
-      lineColor: 0xb0b0b8,
+      particle: '39, 174, 96',   // #27ae60
+      line: '176, 176, 184',     // #b0b0b8
+      accent: '155, 89, 182',    // #9b59b6
     },
   };
 
-  // Scene
-  const scene = new THREE.Scene();
-  scene.background = null; 
-  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-  scene.fog = new THREE.FogExp2(themes[currentTheme].fog, isMobile ? 0.05 : 0.035); // Fog sedikit lebih tebal di mobile biar objek jauh samar
+  let currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  let t = themes[currentTheme] || themes.dark;
 
-  // Camera
-  const camera = new THREE.PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    100
-  );
-  camera.position.set(0, 0, 20);
-
-  // Renderer
-  const renderer = new THREE.WebGLRenderer({
-    canvas,
-    antialias: !isMobile, // Matikan antialias di HP biar GPU gak kerja keras
-    alpha: true,
-  });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  // Configuration
+  let width, height;
+  const particleCount = isMobile ? 40 : 100;
+  const connectionDistance = isMobile ? 100 : 150;
+  const mouseDistance = 150;
+  let particles = [];
   
-  // 2. Kunci pixel ratio di angka 1 untuk mobile (Sangat ngaruh ke performa)
-  renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
+  // Mouse interaction
+  const mouse = { x: null, y: null, radius: mouseDistance };
 
-  // ---- Materials ----
-  const greenWireMat = new THREE.MeshBasicMaterial({ color: 0x98C379, wireframe: true, transparent: true, opacity: 0.35 });
-  const cyanWireMat = new THREE.MeshBasicMaterial({ color: 0x56B6C2, wireframe: true, transparent: true, opacity: 0.3 });
-  const purpleWireMat = new THREE.MeshBasicMaterial({ color: 0xC778DD, wireframe: true, transparent: true, opacity: 0.25 });
-  const dimWireMat = new THREE.MeshBasicMaterial({ color: 0x5C6370, wireframe: true, transparent: true, opacity: 0.15 });
-
-  // ---- Floating Geometries ----
-  const floatingObjects = [];
-  const shapes = [
-    { geo: new THREE.IcosahedronGeometry(1.2, 0), mat: greenWireMat },
-    { geo: new THREE.OctahedronGeometry(0.9, 0), mat: cyanWireMat },
-    { geo: new THREE.TorusGeometry(0.8, 0.3, 8, 12), mat: purpleWireMat },
-    { geo: new THREE.TetrahedronGeometry(0.7, 0), mat: greenWireMat },
-    { geo: new THREE.BoxGeometry(0.8, 0.8, 0.8), mat: cyanWireMat },
-    { geo: new THREE.DodecahedronGeometry(0.6, 0), mat: purpleWireMat },
-  ];
-
-  // 3. Pangkas jumlah objek melayang di mobile (Dari 25 jadi 10)
-  const objectCount = isMobile ? 10 : 25;
-  for (let i = 0; i < objectCount; i++) {
-    const shape = shapes[i % shapes.length];
-    const mesh = new THREE.Mesh(shape.geo, shape.mat);
-
-    mesh.position.set(
-      (Math.random() - 0.5) * (isMobile ? 20 : 40), // Persempit area sebaran di mobile
-      (Math.random() - 0.5) * (isMobile ? 15 : 25),
-      (Math.random() - 0.5) * 30 - 5
-    );
-
-    mesh.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
-    const scale = 0.5 + Math.random() * 1.2;
-    mesh.scale.set(scale, scale, scale);
-
-    mesh.userData = {
-      rotSpeed: {
-        x: (Math.random() - 0.5) * 0.008,
-        y: (Math.random() - 0.5) * 0.008,
-        z: (Math.random() - 0.5) * 0.005,
-      },
-      floatSpeed: 0.2 + Math.random() * 0.5,
-      floatAmplitude: 0.3 + Math.random() * 0.8,
-      initialY: mesh.position.y,
-      phase: Math.random() * Math.PI * 2,
-    };
-
-    scene.add(mesh);
-    floatingObjects.push(mesh);
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    initParticles();
   }
 
-  // ---- Floating Console Windows ----
-  const consoleWindows = [];
+  window.addEventListener('resize', resize);
   
-  // 4. Jendela console dihilangkan total di mobile karena memakan draw calls besar
   if (!isMobile) {
-    for (let i = 0; i < 4; i++) {
-      const consoleGroup = new THREE.Group();
-      const frameGeo = new THREE.PlaneGeometry(3.5, 2.2);
-      const frameMat = new THREE.MeshBasicMaterial({ color: 0x282C33, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
-      const frame = new THREE.Mesh(frameGeo, frameMat);
-      consoleGroup.add(frame);
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+    window.addEventListener('mouseout', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+  }
 
-      const borderGeo = new THREE.EdgesGeometry(frameGeo);
-      const borderMat = new THREE.LineBasicMaterial({ color: 0x98C379, transparent: true, opacity: 0.4 });
-      const border = new THREE.LineSegments(borderGeo, borderMat);
-      consoleGroup.add(border);
-
-      const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
-      const radius = 12 + Math.random() * 5;
-      consoleGroup.position.set(Math.cos(angle) * radius, (Math.random() - 0.5) * 8, -5 - Math.random() * 10);
-      consoleGroup.rotation.y = -angle * 0.3;
-      consoleGroup.rotation.x = (Math.random() - 0.5) * 0.3;
-
-      consoleGroup.userData = {
-        rotSpeed: (Math.random() - 0.5) * 0.003,
-        floatSpeed: 0.15 + Math.random() * 0.2,
-        floatAmplitude: 0.4,
-        initialY: consoleGroup.position.y,
-        phase: Math.random() * Math.PI * 2,
-      };
-
-      scene.add(consoleGroup);
-      consoleWindows.push(consoleGroup);
+  // Particle Class
+  class Particle {
+    constructor() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.vx = (Math.random() - 0.5) * 1.5;
+      this.vy = (Math.random() - 0.5) * 1.5;
+      this.size = Math.random() * 2 + 1; // 1px - 3px
+      this.isAccent = Math.random() > 0.8; // 20% accent colored particles
     }
-  }
 
-  // ---- Particle Grid / Nodes ----
-  // 5. Kurangi jumlah partikel di mobile (Dari 150 jadi 40)
-  const particleCount = isMobile ? 40 : 150;
-  const particleGeo = new THREE.BufferGeometry();
-  const particlePositions = new Float32Array(particleCount * 3);
+    update() {
+      // Move
+      this.x += this.vx;
+      this.y += this.vy;
 
-  for (let i = 0; i < particleCount; i++) {
-    particlePositions[i * 3] = (Math.random() - 0.5) * 50;
-    particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 30;
-    particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 40 - 5;
-  }
+      // Bounce off edges
+      if (this.x < 0 || this.x > width) this.vx = -this.vx;
+      if (this.y < 0 || this.y > height) this.vy = -this.vy;
 
-  particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-  const particleMat = new THREE.PointsMaterial({
-    color: 0x98C379,
-    size: isMobile ? 0.12 : 0.08, // Di HP dibikin agak gedean dikit biar tetep kelihatan
-    transparent: true,
-    opacity: 0.5,
-    sizeAttenuation: true,
-  });
+      // Mouse repulsion (only active on desktop)
+      if (!isMobile && mouse.x != null && mouse.y != null) {
+        const dx = mouse.x - this.x;
+        const dy = mouse.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < mouse.radius) {
+          const forceDirectionX = dx / distance;
+          const forceDirectionY = dy / distance;
+          const force = (mouse.radius - distance) / mouse.radius;
+          const maxSpeed = 3;
+          
+          this.vx -= forceDirectionX * force * 0.5;
+          this.vy -= forceDirectionY * force * 0.5;
 
-  const particles = new THREE.Points(particleGeo, particleMat);
-  scene.add(particles);
-
-  // ---- Connection Lines ----
-  // 6. Matikan kalkulasi garis penghubung di mobile (Ini bottleneck utama GPU mobile)
-  if (!isMobile) {
-    const linePositions = [];
-    for (let i = 0; i < particleCount; i++) {
-      for (let j = i + 1; j < particleCount; j++) {
-        const dx = particlePositions[i * 3] - particlePositions[j * 3];
-        const dy = particlePositions[i * 3 + 1] - particlePositions[j * 3 + 1];
-        const dz = particlePositions[i * 3 + 2] - particlePositions[j * 3 + 2];
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-        if (dist < 5) {
-          linePositions.push(
-            particlePositions[i * 3], particlePositions[i * 3 + 1], particlePositions[i * 3 + 2],
-            particlePositions[j * 3], particlePositions[j * 3 + 1], particlePositions[j * 3 + 2]
-          );
+          // Limit speed
+          const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+          if (speed > maxSpeed) {
+            this.vx = (this.vx / speed) * maxSpeed;
+            this.vy = (this.vy / speed) * maxSpeed;
+          }
         }
       }
     }
 
-    if (linePositions.length > 0) {
-      const lineGeo = new THREE.BufferGeometry();
-      lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-      const lineMat = new THREE.LineBasicMaterial({ color: 0x5C6370, transparent: true, opacity: 0.1 });
-      const lines = new THREE.LineSegments(lineGeo, lineMat);
-      scene.add(lines);
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${this.isAccent ? t.accent : t.particle}, 0.8)`;
+      ctx.fill();
     }
   }
 
-  // ---- Mouse Interaction ----
-  const mouse = { x: 0, y: 0 };
-  let targetCameraX = 0;
-  let targetCameraY = 0;
-
-  // Hanya jalankan mousemove di non-mobile device
-  if (!isMobile) {
-    window.addEventListener('mousemove', (e) => {
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      targetCameraX = mouse.x * 2;
-      targetCameraY = mouse.y * 1;
-    });
+  function initParticles() {
+    particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
   }
 
-  // ---- Animation Loop ----
-  const clock = new THREE.Clock();
+  function connectParticles() {
+    for (let a = 0; a < particles.length; a++) {
+      for (let b = a + 1; b < particles.length; b++) {
+        const dx = particles[a].x - particles[b].x;
+        const dy = particles[a].y - particles[b].y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < connectionDistance) {
+          const opacity = 1 - (distance / connectionDistance);
+          ctx.beginPath();
+          ctx.moveTo(particles[a].x, particles[a].y);
+          ctx.lineTo(particles[b].x, particles[b].y);
+          ctx.strokeStyle = `rgba(${t.line}, ${opacity * 0.5})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // Animation Loop
+  let animationFrameId;
+  let isVisible = true;
+
+  // Use IntersectionObserver to pause animation when out of view
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      isVisible = entry.isIntersecting;
+      if (isVisible) {
+        animate();
+      }
+    });
+  }, { threshold: 0 });
+  observer.observe(canvas);
 
   function animate() {
-    requestAnimationFrame(animate);
-    const elapsed = clock.getElapsedTime();
+    if (!isVisible) return; // Pause animation
+    
+    animationFrameId = requestAnimationFrame(animate);
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
 
-    // Camera parallax (Skip smooth movement di mobile karena gak ada mousemove)
-    if (!isMobile) {
-      camera.position.x += (targetCameraX - camera.position.x) * 0.02;
-      camera.position.y += (targetCameraY - camera.position.y) * 0.02;
-    }
-    camera.lookAt(0, 0, 0);
-
-    // Animate floating objects
-    for (const obj of floatingObjects) {
-      const d = obj.userData;
-      obj.rotation.x += d.rotSpeed.x;
-      obj.rotation.y += d.rotSpeed.y;
-      obj.rotation.z += d.rotSpeed.z;
-      obj.position.y = d.initialY + Math.sin(elapsed * d.floatSpeed + d.phase) * d.floatAmplitude;
+    // Update and Draw
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
     }
 
-    // Animate console windows (Hanya jalan di desktop)
-    if (!isMobile) {
-      for (const cw of consoleWindows) {
-        const d = cw.userData;
-        cw.rotation.y += d.rotSpeed;
-        cw.position.y = d.initialY + Math.sin(elapsed * d.floatSpeed + d.phase) * d.floatAmplitude;
-      }
-    }
-
-    // Slowly rotate particles
-    particles.rotation.y += 0.0003;
-    particles.rotation.x += 0.0001;
-
-    renderer.render(scene, camera);
+    connectParticles();
   }
 
-  animate();
-
-  // ---- Resize Handler ----
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
-  });
-
-  // ---- Theme Change Handler ----
+  // Handle Theme Change
   window.addEventListener('themechange', (e) => {
-    const t = themes[e.detail.theme] || themes.dark;
-
-    scene.fog.color.setHex(t.fog);
-    greenWireMat.color.setHex(t.green);
-    cyanWireMat.color.setHex(t.cyan);
-    purpleWireMat.color.setHex(t.purple);
-    dimWireMat.color.setHex(t.dim);
-    particleMat.color.setHex(t.particleColor);
-
-    if (!isMobile) {
-      for (const cw of consoleWindows) {
-        cw.children.forEach((child) => {
-          if (child.isMesh && child.material) child.material.color.setHex(t.consoleBg);
-          if (child.isLineSegments && child.material) child.material.color.setHex(t.consoleBorder);
-        });
-      }
-    }
+    currentTheme = e.detail.theme || 'dark';
+    t = themes[currentTheme] || themes.dark;
   });
+
+  // Init
+  resize();
+  
+  // Cleanup capability if needed
+  return () => {
+    cancelAnimationFrame(animationFrameId);
+    window.removeEventListener('resize', resize);
+    observer.disconnect();
+  };
 }
