@@ -2,6 +2,11 @@
 // ANIMATIONS & INTERACTIONS
 // ========================================
 
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
 let typingTimeoutId = null;
 let activeTypingSession = 0;
 
@@ -53,48 +58,112 @@ export function initTypingAnimation(elementId, texts, speed = 80, deleteSpeed = 
 
 // Scroll-triggered fade-in animations
 export function initScrollAnimations() {
-  const observerOptions = {
-    root: null,
-    rootMargin: '0px 0px -80px 0px',
-    threshold: 0.1,
-  };
+  const isMobile = window.innerWidth <= 768;
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        // For staggered card animations
-        if (entry.target.classList.contains('project-card') || 
-            entry.target.classList.contains('skill-category') ||
-            entry.target.classList.contains('cert-card')) {
-          entry.target.classList.add('animate-in');
+  if (isMobile) {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px 0px -80px 0px',
+      threshold: 0.1,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // For staggered card animations
+          if (entry.target.classList.contains('project-card') || 
+              entry.target.classList.contains('skill-category') ||
+              entry.target.classList.contains('cert-card')) {
+            entry.target.classList.add('animate-in');
+          }
+        }
+      });
+    }, observerOptions);
+
+    // Apply to sections
+    document.querySelectorAll('.section').forEach((section) => {
+      section.classList.add('fade-in');
+      observer.observe(section);
+    });
+
+    // Apply to project cards with staggered delay
+    document.querySelectorAll('.project-card').forEach((card, index) => {
+      card.style.transitionDelay = `${index * 0.1}s`;
+      observer.observe(card);
+    });
+
+    // Apply to skill categories with staggered delay
+    document.querySelectorAll('.skill-category').forEach((cat, index) => {
+      cat.style.transitionDelay = `${index * 0.08}s`;
+      observer.observe(cat);
+    });
+
+    // Apply to cert cards with staggered delay
+    document.querySelectorAll('.cert-card').forEach((card, index) => {
+      card.style.transitionDelay = `${index * 0.08}s`;
+      observer.observe(card);
+    });
+
+    return;
+  }
+
+  // --- GSAP ScrollTrigger for Desktop ---
+  
+  // Sections fade in
+  document.querySelectorAll('.section').forEach((section) => {
+    gsap.fromTo(section, 
+      { opacity: 0, y: 40 }, 
+      {
+        opacity: 1, 
+        y: 0, 
+        duration: 0.8, 
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: section,
+          start: "top 80%",
         }
       }
-    });
-  }, observerOptions);
-
-  // Apply to sections
-  document.querySelectorAll('.section').forEach((section) => {
-    section.classList.add('fade-in');
-    observer.observe(section);
+    );
   });
 
-  // Apply to project cards with staggered delay
-  document.querySelectorAll('.project-card').forEach((card, index) => {
-    card.style.transitionDelay = `${index * 0.1}s`;
-    observer.observe(card);
-  });
+  // Project Cards Stagger
+  gsap.fromTo('.project-card', 
+    { opacity: 0, y: 50 },
+    {
+      opacity: 1, 
+      y: 0, 
+      duration: 0.6, 
+      ease: "back.out(1.2)",
+      stagger: 0.15,
+      scrollTrigger: {
+        trigger: '#projects-grid',
+        start: "top 85%",
+      }
+    }
+  );
 
-  // Apply to skill categories with staggered delay
-  document.querySelectorAll('.skill-category').forEach((cat, index) => {
-    cat.style.transitionDelay = `${index * 0.08}s`;
-    observer.observe(cat);
-  });
+  // Skill Categories Stagger
+  gsap.fromTo('.skill-category', 
+    { opacity: 0, y: 30 },
+    {
+      opacity: 1, 
+      y: 0, 
+      duration: 0.5, 
+      ease: "back.out(1.2)",
+      stagger: 0.1,
+      scrollTrigger: {
+        trigger: '#skills-grid',
+        start: "top 85%",
+      }
+    }
+  );
 
-  // Apply to cert cards with staggered delay
-  document.querySelectorAll('.cert-card').forEach((card, index) => {
-    card.style.transitionDelay = `${index * 0.08}s`;
-    observer.observe(card);
+  // Remove existing CSS classes that might conflict with GSAP
+  document.querySelectorAll('.fade-in').forEach(el => el.classList.remove('fade-in', 'visible'));
+  document.querySelectorAll('.project-card, .skill-category, .cert-card').forEach(el => {
+    el.style.transitionDelay = '';
+    el.classList.remove('animate-in');
   });
 }
 

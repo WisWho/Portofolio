@@ -3,6 +3,8 @@
 // ========================================
 
 import Lenis from 'lenis';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initHero3D } from './hero3d.js';
 import { getProjects } from './projects.js';
 import {
@@ -85,23 +87,57 @@ window.switchSkillTab = function (tabId) {
     btnSkills.classList.remove('active');
   }
 
-  // Animate Out
-  outGrid.classList.remove('active-tab');
-  outGrid.classList.add('fade-out-tab');
+  const isMobile = window.innerWidth <= 768;
 
-  // Wait for fade out to complete, then display block the next one
-  setTimeout(() => {
-    outGrid.style.display = 'none';
-    outGrid.classList.remove('fade-out-tab');
+  if (isMobile) {
+    // Animate Out
+    outGrid.classList.remove('active-tab');
+    outGrid.classList.add('fade-out-tab');
 
-    inGrid.style.display = 'grid'; // Need to be grid before fading in
-    
-    // Force reflow
-    void inGrid.offsetWidth;
+    // Wait for fade out to complete, then display block the next one
+    setTimeout(() => {
+      outGrid.style.display = 'none';
+      outGrid.classList.remove('fade-out-tab');
 
-    // Animate In
-    inGrid.classList.add('active-tab');
-  }, 250); // Matches the 0.25s CSS transition
+      inGrid.style.display = 'grid'; // Need to be grid before fading in
+      
+      // Force reflow
+      void inGrid.offsetWidth;
+
+      // Animate In
+      inGrid.classList.add('active-tab');
+    }, 250); // Matches the 0.25s CSS transition
+  } else {
+    // GSAP Animation for Desktop
+    gsap.to(outGrid, {
+      opacity: 0,
+      y: -15,
+      duration: 0.25,
+      onComplete: () => {
+        outGrid.style.display = 'none';
+        outGrid.classList.remove('active-tab');
+        
+        inGrid.style.display = 'grid';
+        
+        // Use fromTo to reset starting state and animate in
+        gsap.fromTo(inGrid, 
+          { opacity: 0, y: 15 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            ease: "back.out(1.2)",
+            onComplete: () => {
+              inGrid.classList.add('active-tab');
+              inGrid.style.opacity = '';
+              inGrid.style.transform = '';
+              ScrollTrigger.refresh(); // Refresh in case layout shifts
+            }
+          }
+        );
+      }
+    });
+  }
 };
 
 // ---- Certificate Modal ----

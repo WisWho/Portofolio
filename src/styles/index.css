@@ -1593,13 +1593,15 @@ button {
 
 .cert-modal-content {
   position: relative;
-  width: 90vw;
-  max-width: 800px; /* Batasi maksimal lebar agar tidak terlalu besar */
+  max-width: min(90vw, 1000px);
   max-height: 90vh;
   border-radius: var(--radius-md);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   transform: scale(0.95);
   transition: transform 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .cert-modal.active .cert-modal-content {
@@ -1610,8 +1612,8 @@ button {
   max-width: 100%;
   max-height: 90vh;
   border-radius: var(--radius-md);
+  object-fit: contain;
   display: block;
-  margin: 0 auto;
 }
 
 .cert-modal-close {
